@@ -8,7 +8,7 @@ class User_Book_Association(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), primary_key=True)
     extra_data = db.Column(db.String(50))
     user = db.relationship("User", back_populates="books")
-    books = db.relationship("Book", back_populates="sellers")
+    books = db.relationship("Book", back_populates="seller")
     
     def __init__(self, **kwargs):
         self.extra_data = kwargs.get('extra_data', '')
@@ -35,6 +35,7 @@ class User(db.Model):
     def __init__(self, **kwargs):
         self.name = kwargs.get('name', '')
         self.netid = kwargs.get('netid', '')
+        self.pfp = kwargs.get('pfp', None)
 
     def serialize(self):
         return {
@@ -53,7 +54,7 @@ class Book(db.Model):
     condition = db.Column(db.String, nullable=False)
     notes = db.Column(db.String(300), nullable=False)
     image = db.Column(db.String, nullable =True)
-    sellers = db.relationship("User_Book_Association", back_populates='books')
+    seller = db.relationship("User_Book_Association", back_populates='books')
     courses = db.relationship("Course_Book_Association", back_populates='books')
 
     
@@ -64,21 +65,18 @@ class Book(db.Model):
         self.notes = kwargs.get('notes', '')
 
     def serialize(self):
-        sellers = []
-        for seller in self.sellers:
-                sellers.append((User.query.filter_by(id=seller.user_id).first()).serialize())
         courses = []
         for course in self.courses:
-                courses.append((Course.query.filter_by(id=course.course_id).first()).serialize())
+                courses.append((Course.query.filter_by(id=course.course_id).first()).title)
         return {
             'id' : self.id,
             'title' : self.title,
-            'course' : courses,
+            'courses' : courses,
             'price' : self.price, 
             'condition': self.condition, 
             'image' : self.image,
             'notes' : self.notes,
-            'sellers' : sellers
+            'seller' : self.seller.serialize()
         }
 
 class Course(db.Model):

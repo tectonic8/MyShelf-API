@@ -47,7 +47,7 @@ def main():
     #     host = '0.0.0.0'
     #     cnx = pymysql.connect(user=db_user, password=db_password,
     #                           host=host, db=db_name)
-    return "os.environ.get('example')"
+    return "hi daniel"
 
 @app.route('/api/books/', methods=['GET'])
 def get_books():
@@ -71,7 +71,7 @@ def get_books_by_course(course_name):
     else:
         return json.dumps({'success':False, 'error':'This course doesn\'t exist.'}), 404
 
-@app.route('/api/books/user/<int:netid>/', methods=['GET'])
+@app.route('/api/books/user/<string:netid>/', methods=['GET'])
 def get_books_by_seller(netid):
     """
     Returns a list of dictionary representations of all books being sold by the
@@ -153,7 +153,8 @@ def add_book():
         if course is None:
             # https://classes.cornell.edu/api/2.0/search/classes.json?roster=FA14&subject=MATH
             course = Course(title = post_body['course'], college="Arts and Sciences")
-        book = Book(title=post_body['title'], price=post_body['price'], condition=post_body['condition'], notes=post_body['notes'])
+        
+        book = Book(title=post_body['title'], price=post_body['price'], condition=post_body.get('condition', None), notes=post_body.get('notes', None))
         
         a1 = User_Book_Association()
         a1.user = user
@@ -177,7 +178,6 @@ def remove_book_by_id(book_id):
         db.session.commit()
         return json.dumps({'success':True, 'data':book.serialize()}), 200
     return json.dumps({'success':False, 'error':'This book doesn\'t exist.'}), 404
-
 
 
 # @app.route('/api/classes/', methods=['GET'])
