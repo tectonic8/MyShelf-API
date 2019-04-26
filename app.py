@@ -1,9 +1,27 @@
 import json
+import os
 from flask import Flask, request
 from db import db, User, Book, Course, User_Book_Association, Course_Book_Association
 
 app = Flask(__name__)
 db_filename = 'myshelf.db'
+
+# # # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % db_filename
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqldb://root@/shelf-database?unix_socket=/cloudsql/myshelf-238319:shelf'
+
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_ECHO'] = True
+
+# db_user = os.environ.get('CLOUD_SQL_USERNAME')
+# db_password = os.environ.get('CLOUD_SQL_PASSWORD')
+# db_name = os.environ.get('CLOUD_SQL_DATABASE_NAME')
+# db_connection_name = os.environ.get('CLOUD_SQL_CONNECTION_NAME')
+
+
+
+# db.init_app(app)
+# with app.app_context():
+#     db.create_all()
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % db_filename
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -13,9 +31,23 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+
 @app.route('/')
-def root():
-    return 'Hello world!'
+def main():
+    # if os.environ.get('GAE_ENV') == 'standard':
+    #     # If deployed, use the local socket interface for accessing Cloud SQL
+    #     unix_socket = '/cloudsql/{}'.format(db_connection_name)
+    #     cnx = pymysql.connect(user=db_user, password=db_password,
+    #                           unix_socket=unix_socket, db=db_name)
+    # else:
+    #     # If running locally, use the TCP connections instead
+    #     # Set up Cloud SQL Proxy (cloud.google.com/sql/docs/mysql/sql-proxy)
+    #     # so that your application can use 127.0.0.1:3306 to connect to your
+    #     # Cloud SQL instance
+    #     host = '0.0.0.0'
+    #     cnx = pymysql.connect(user=db_user, password=db_password,
+    #                           host=host, db=db_name)
+    return "os.environ.get('example')"
 
 @app.route('/api/books/', methods=['GET'])
 def get_books():
@@ -100,7 +132,7 @@ def create_user():
     Takes a name and a net ID. Profile picture not implemented.
     """
     post_body = json.loads(request.data)
-    user = User(name=post_body['name'], name=post_body.get('netid'))
+    user = User(name=post_body['name'], netid=post_body.get('netid'))
     db.session.add(user)
     db.session.commit()
     res = {'success':True, 'data':user.serialize()}
