@@ -17,7 +17,7 @@ with app.app_context():
 
 @app.route('/')
 def main():
-    return "hi daniel"
+    return "hello world, I guess"
 
 @app.route('/api/books/', methods=['GET'])
 def get_books():
