@@ -14,18 +14,18 @@
       "success": True,
       "data": [
                 {
-                  'id' : 0,
-                  'title' : "Introduction to Calculus",
-                  'course' : "MATH 1110",
-                  'image' : None,
-                  'listings' : [0, 3, 43, 192]
+                  "id" : 1,
+                  "title" : "Introduction to Calculus",
+                  "course" : "MATH 1110",
+                  "image" : None,
+                  "listings" : [0, 3, 43, 192]
                 },
                 {
-                  'id' : 1,
-                  'title' : "Algorithm Design",
-                  'course' : "CS 4820",
-                  'image' : None,
-                  'listings' : [29, 323, 4, 13]
+                  "id" : 2,
+                  "title" : "Algorithm Design",
+                  "course" : "CS 4820",
+                  "image" : None,
+                  "listings" : [29, 323, 4, 13]
                 }
               ]
     }
@@ -72,7 +72,7 @@
 
 *Request:* `GET /api/``books``/``course/{string:course name}``/`
 
-- By course name, the method expects “CS 1110”, not “Introduction to Computing Using Python”
+- By course name, the method expects “CS%201110”, not “Introduction to Computing Using Python”. The &20 stands in for a space.
 - If there are no books for that course, the method returns an empty list rather than an error.
 
 *Response:*
@@ -80,6 +80,92 @@
     {
       "success": True,
       "data": <List of dict representations of books, as above>
+    } 
+
+
+## Get book by title
+
+*Request:* `GET /api/books/book/{string: book title}/`
+
+- Here the title would be "Introductory%20Calculus”
+
+*Response:*
+
+    {
+      "success": True,
+      "data": {
+          "id" : 1,
+          "title" : "Introductory Calculus",
+          "course" : "MATH 1110",
+          "image" : None,
+          "listings" : [12, 224, 23]
+        }
+    } 
+
+
+## Get book by ID
+
+*Request:* `GET /api/books/book/id/{int: book id}/`
+
+- Here the id would be 0.
+
+*Response:*
+
+    {
+      "success": True,
+      "data": {
+          "id" : 1,
+          "title" : "Introductory Calculus",
+          "course" : "MATH 1110",
+          "image" : None,
+          "listings" : [12, 224, 23]
+        }
+    } 
+
+
+## Get user by net ID
+
+*Request:* `GET /api/user/{string: net ID}/`
+
+- Profile picture not currently implemented
+- Note that the listings for a user are stored by their ID, not their full dict representation
+
+*Response:*
+
+    {
+      "success": True,
+      "data": {
+                "id" : 1,
+                "name" : Hartek Sabharwal,
+                "netid" : hs786,
+                "pfp" : None,
+                "listings" : [0, 10, 283, 392]
+              }
+    } 
+
+
+## Get listing by ID
+
+*Request:* `GET /api/listing/{int: listing ID}/`
+
+- Error if the listing does not exist. 
+
+*Response:*
+
+    {
+      "success": True,
+      "data": 
+              {
+                "id" : 3,
+                "title" : "Introduction to Statistics",
+                "price" : "27.83", 
+                "condition": "good", 
+                "notes" : "My dog ate the front cover.",
+                "image" : None,
+                "course" : "STSCI 2100",
+                "seller" : 10, 
+                "book" : 273
+              }
     } 
 
 
@@ -95,69 +181,28 @@
       "success": True,
       "data": [
                 {
-                  'id' : 0,
-                  'title' : "Introduction to Statistics",
-                  'price' : "27.83", 
-                  'condition': "good", 
-                  'notes' : "My dog ate the front cover.",
-                  'image' : None,
-                  'course' : "STSCI 2100",
-                  'seller' : 10, 
-                  'book' : 273
+                  "id" : 1,
+                  "title" : "Introduction to Statistics",
+                  "price" : "27.83", 
+                  "condition": "good", 
+                  "notes" : "My dog ate the front cover.",
+                  "image" : None,
+                  "course" : "STSCI 2100",
+                  "seller" : 10, 
+                  "book" : 273
                 }, 
                 {
-                  'id' : 29,
-                  'title' : "Algorithm Design",
-                  'price' : "3.23", 
-                  'condition': "okay", 
-                  'notes' : "My friend drew a thing on a lot of the pages.",
-                  'image' : None,
-                  'course' : "CS 4820",
-                  'seller' : 10, 
-                  'book' : 932 
+                  "id" : 29,
+                  "title" : "Algorithm Design",
+                  "price" : "3.23", 
+                  "condition": "okay", 
+                  "notes" : "My friend drew a thing on a lot of the pages.",
+                  "image" : None,
+                  "course" : "CS 4820",
+                  "seller" : 10, 
+                  "book" : 932 
                   }
               ]
-    } 
-
-
-## Get book by title
-
-*Request:* `GET /api/books/book/{string: book title}/`
-
-- Here the title would be "Introductory Calculus”
-
-*Response:*
-
-    {
-      "success": True,
-      "data": {
-          'id' : 0,
-          'title' : "Introductory Calculus",
-          'course' : ["MATH 1110", "MATH 1910"],
-          'image' : None,
-          'listings' : [12, 224, 23]
-        }
-    } 
-
-
-## Get user by net ID
-
-*Request:* `GET /api/user/{string: net ID}/`
-
-- Profile picture not currently implemented
-- Note that the list of books for a user are stored by their ID, not their full dict representation, which would be circular.
-
-*Response:*
-
-    {
-      "success": True,
-      "data": {
-                'id' : 0,
-                'name' : Hartek Sabharwal,
-                'netid' : hs786,
-                'pfp' : None,
-                'books' : [0, 10, 283, 392]
-              }
     } 
 
 
@@ -180,11 +225,11 @@
     {
       "success": True,
       "data": {
-                'id' : 0,
-                'name' : Hartek Sabharwal,
-                'netid' : hs786,
-                'pfp' : "/images/users/hs786.png",
-                'listings' : []
+                "id" : 1,
+                "name" : Hartek Sabharwal,
+                "netid" : hs786,
+                "pfp" : "/images/users/hs786.png",
+                "listings" : []
               }
     }
 
@@ -192,7 +237,7 @@
 
     struct PostResponse {
       var success: Bool
-      // Note: you don't need data here because you're POST-ing, not getting data back. 
+      // Note: you don"t need data here because you"re POST-ing, not getting data back. 
       // You can choose whether or not you want to have the data variable here.
       // You need the "success" variable here because you want to know if you successfully
       // sent the information to the backend.
@@ -226,7 +271,7 @@
 
 *Request:* `POST /api/listings/`
 
-- The condition and notes fields are optional.
+- The condition, image, and notes fields are optional.
 - Might add author and edition field at some point?
 - Error if the user does not exist.
 
@@ -238,7 +283,8 @@
       "course" : "CS 4820", 
       "price" : "27.29",
       "condition" : "ehh", 
-      "notes" : "My friend drew a thing on some of the pages."
+      "notes" : "My friend drew a thing on some of the pages.",
+      "image" : "/images/books/algorithm_design.png"
     }
 
 *Response:*
@@ -246,20 +292,39 @@
     {
       "success": True,
       "data": {
-          'id' : 0,
-          'title' : "Introductory Calculus",
-          'course' : "MATH 1110",
-          'price' : "27.29", 
-          'condition': "good", 
-          'image' : None,
-          'notes' : "I highlighted in some places.",
-          'seller' : {
-                        'id' : 0,
-                        'name' : Hartek Sabharwal,
-                        'netid' : hs786,
-                        'pfp' : "/images/users/hs786.png",
-                        'books' : [0]
-                    }
+          "id" : 1,
+          "title" : "Algorithm Design",
+          "course" : "CS 4820",
+          "price" : "27.29", 
+          "condition": "ehh", 
+          "notes" : "My friend drew a thing on some of the pages.",
+          "image" : "/images/books/algorithm_design.png",
+          "seller" : 1,
+          "book" : 2
         }
     }
+
+
+## Delete listing by ID
+
+*Request:* `DELETE /api/listing/{int: listing ID}/`
+
+- Error if the listing doesn’t exist to begin with. 
+
+*Response:*
+
+    {
+      "success": True,
+      "data": {
+          "id" : 29,
+          "title" : "Algorithm Design",
+          "course" : "CS 4820",
+          "price" : "27.29", 
+          "condition": "ehh", 
+          "notes" : "My friend drew a thing on some of the pages.",
+          "image" : "/images/books/algorithm_design.png",
+          "seller" : 1,
+          "book" : 2
+        }
+    } 
 
