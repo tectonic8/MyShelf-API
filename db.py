@@ -2,24 +2,24 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-class User_Book_Association(db.Model):
-    __tablename__ = 'user-book-association'
+class User_Listing_Association(db.Model):
+    __tablename__ = 'user-listing-association'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), primary_key=True)
+    listing_id = db.Column(db.Integer, db.ForeignKey('listing.id'), primary_key=True)
     extra_data = db.Column(db.String(50))
-    user = db.relationship("User", back_populates="books")
-    books = db.relationship("Book", back_populates="seller")
+    user = db.relationship("User", back_populates="listings")
+    listings = db.relationship("Listing", back_populates="seller") #back_populates = 'user' for symmetry?
     
     def __init__(self, **kwargs):
         self.extra_data = kwargs.get('extra_data', '')
 
-class Course_Book_Association(db.Model):
-    __tablename__ = 'course-book-association'
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), primary_key=True)
+class Book_Listing_Association(db.Model):
+    __tablename__ = 'book-listing-association'
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), primary_key=True)
+    listing_id = db.Column(db.Integer, db.ForeignKey('listing.id'), primary_key=True)
     extra_data = db.Column(db.String(50))
-    course = db.relationship("Course", back_populates="books")
-    books = db.relationship("Book", back_populates="courses")
+    book = db.relationship("Book", back_populates="listings")
+    listings = db.relationship("Listing", back_populates="book")
     
     def __init__(self, **kwargs):
         self.extra_data = kwargs.get('extra_data', '')
@@ -28,9 +28,9 @@ class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     netid = db.Column(db.String, nullable=False, unique=True)
-    name = db.Column(db.String, nullable =False)
-    pfp = db.Column(db.String, nullable =True)
-    books = db.relationship("User_Book_Association", back_populates="user")
+    name = db.Column(db.String, nullable=False)
+    pfp = db.Column(db.String, nullable=True)
+    listings = db.relationship("User_Listing_Association", back_populates="user")
     
     def __init__(self, **kwargs):
         self.name = kwargs.get('name', '')
@@ -43,57 +43,60 @@ class User(db.Model):
             'name' : self.name,
             'netid' : self.netid,
             'pfp' : self.pfp,
-            'books' : [book.book_id for book in self.books]
+            'listings' : [listing.listing_id for listing in self.listings]
+        }
+
+class Listing(db.Model):
+    __tablename__ = 'listing'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    price = db.Column(db.String, nullable =False)
+    course = db.Column(db.String, nullable=False)
+    condition = db.Column(db.String, nullable=False)
+    notes = db.Column(db.String(300), nullable=False)
+    image = db.Column(db.String, nullable =True)
+    seller = db.relationship("User_Listing_Association", back_populates='listings')
+    book =  db.relationship("Book_Listing_Association", back_populates="listings")
+    
+    def __init__(self, **kwargs):
+        self.title = kwargs.get('title', 'Untitled')
+        self.price = kwargs.get('price', '0.00')
+        self.course = kwargs.get('course', '')
+        self.condition = kwargs.get('condition', '')
+        self.notes = kwargs.get('notes', '')
+        self.image = kwargs.get('image', None)
+
+    def serialize(self):
+        return {
+            'id' : self.id,
+            'title' : self.title,
+            'price' : self.price, 
+            'condition': self.condition, 
+            'notes' : self.notes,
+            'image' : self.image,
+            'course' : self.course,
+            'seller' : self.seller[0].user_id, 
+            'book' : self.book[0].book_id
         }
 
 class Book(db.Model):
     __tablename__ = 'book'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
-    price = db.Column(db.String, nullable =False)
-    condition = db.Column(db.String, nullable=False)
-    notes = db.Column(db.String(300), nullable=False)
+    course = db.Column(db.String, nullable=False)
     image = db.Column(db.String, nullable =True)
-    seller = db.relationship("User_Book_Association", back_populates='books')
-    courses = db.relationship("Course_Book_Association", back_populates='books')
-
+    listings = db.relationship("Book_Listing_Association", back_populates='book')
     
     def __init__(self, **kwargs):
-        self.title = kwargs.get('title', 'Untitled')
-        self.price = kwargs.get('price', '0.00')
-        self.condition = kwargs.get('condition', '')
-        self.notes = kwargs.get('notes', '')
-
-    def serialize(self):
-        courses = []
-        for course in self.courses:
-                courses.append((Course.query.filter_by(id=course.course_id).first()).title)
-        return {
-            'id' : self.id,
-            'title' : self.title,
-            'courses' : courses,
-            'price' : self.price, 
-            'condition': self.condition, 
-            'image' : self.image,
-            'notes' : self.notes,
-            'seller' : self.seller.serialize()
-        }
-
-class Course(db.Model):
-    __tablename__ = 'course'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    college = db.Column(db.String, nullable=False)
-    books = db.relationship("User_Book_Association", back_populates='course')
-
-    def __init__(self, **kwargs):
         self.title = kwargs.get('title', '')
-        self.college = kwargs.get('college', '')
+        self.course = kwargs.get('course', '')
+        self.image = kwargs.get('image', '')
 
     def serialize(self):
         return {
             'id' : self.id,
             'title' : self.title,
-            'college' : self.college,
-            'books' : [book.book_id for book in self.books]
-        }
+            'course' : self.course,
+            'image' : self.image,
+            'listings' : [listing.listing_id for listing in self.listings]
+        } 

@@ -1,27 +1,11 @@
 import json
 import os
+from urllib.parse import unquote
 from flask import Flask, request
-from db import db, User, Book, Course, User_Book_Association, Course_Book_Association
+from db import db, User, Book, Listing, User_Listing_Association, Book_Listing_Association
 
 app = Flask(__name__)
 db_filename = 'myshelf.db'
-
-# # # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % db_filename
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqldb://root@/shelf-database?unix_socket=/cloudsql/myshelf-238319:shelf'
-
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# app.config['SQLALCHEMY_ECHO'] = True
-
-# db_user = os.environ.get('CLOUD_SQL_USERNAME')
-# db_password = os.environ.get('CLOUD_SQL_PASSWORD')
-# db_name = os.environ.get('CLOUD_SQL_DATABASE_NAME')
-# db_connection_name = os.environ.get('CLOUD_SQL_CONNECTION_NAME')
-
-
-
-# db.init_app(app)
-# with app.app_context():
-#     db.create_all()
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % db_filename
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -31,22 +15,8 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-
 @app.route('/')
 def main():
-    # if os.environ.get('GAE_ENV') == 'standard':
-    #     # If deployed, use the local socket interface for accessing Cloud SQL
-    #     unix_socket = '/cloudsql/{}'.format(db_connection_name)
-    #     cnx = pymysql.connect(user=db_user, password=db_password,
-    #                           unix_socket=unix_socket, db=db_name)
-    # else:
-    #     # If running locally, use the TCP connections instead
-    #     # Set up Cloud SQL Proxy (cloud.google.com/sql/docs/mysql/sql-proxy)
-    #     # so that your application can use 127.0.0.1:3306 to connect to your
-    #     # Cloud SQL instance
-    #     host = '0.0.0.0'
-    #     cnx = pymysql.connect(user=db_user, password=db_password,
-    #                           host=host, db=db_name)
     return "hi daniel"
 
 @app.route('/api/books/', methods=['GET'])
@@ -64,32 +34,28 @@ def get_books_by_course(course_name):
     Returns a list of dictionary representations of all books associated with 
     the given course. Method takes a course name, ex. CS3110.
     """
-    course = Course.query.filter_by(title=course_name).first()
-    if course is not None:
-        books = course.serialize()['books']
-        return json.dumps({'success':True, 'data':books}), 200
-    else:
-        return json.dumps({'success':False, 'error':'This course doesn\'t exist.'}), 404
-
-@app.route('/api/books/user/<string:netid>/', methods=['GET'])
-def get_books_by_seller(netid):
-    """
-    Returns a list of dictionary representations of all books being sold by the
-    given user. Method takes a net ID. 
-    """
-    user = Course.query.filter_by(id=netid).first()
-    if user is not None:
-        books = user.serialize()['books']
-        return json.dumps({'success':True, 'data':books}), 200
-    else:
-        return json.dumps({'success':False, 'error':'This user doesn\'t exist.'}), 404
+    course_name = unquote(course_name)
+    books = Book.query.filter_by(course=course_name)
+    return json.dumps({'success':True, 'data':[book.serialize() for book in books]}), 200
 
 @app.route('/api/books/book/<string:book_title>/', methods=['GET'])
 def get_book_by_title(book_title):
     """
     Returns a dictionary representations of the book with the given title
     """
+    book_title = unquote(book_title)
     book = Book.query.filter_by(title=book_title).first()
+    if book is not None:
+        return json.dumps({'success':True, 'data':book.serialize()}), 200
+    else:
+        return json.dumps({'success':False, 'error':'This book doesn\'t exist.'}), 404
+
+@app.route('/api/books/book/id/<int:book_id>/', methods=['GET'])
+def get_book_by_id(book_id):
+    """
+    Returns a dictionary representations of the book with the given title
+    """
+    book = Book.query.filter_by(id=book_id).first()
     if book is not None:
         return json.dumps({'success':True, 'data':book.serialize()}), 200
     else:
@@ -106,25 +72,29 @@ def get_user_by_netid(netid):
     else:
         return json.dumps({'success':False, 'error':'This user doesn\'t exist.'}), 404
 
-@app.route('/api/courses/', methods=['GET'])
-def get_courses():
+@app.route('/api/listing/<int:listing_id>/', methods=['GET'])
+def get_listing_by_id(listing_id):
     """
-    Returns a list of dictionary representations of all courses in the database.
+    Returns a dictionary representations of the listing with the given id
     """
-    courses = Course.query.all()
-    res = {'success':True, 'data': [course.serialize() for course in courses]}
-    return json.dumps(res), 200
-
-@app.route('/api/courses/<string:title>/', methods=['GET'])
-def get_course_by_title(title):
-    """
-    Returns a dictionary representations of the course with the given title. 
-    """
-    course = Course.query.filter_by(title=title).first()
-    if course is not None:
-        return json.dumps({'success':True, 'data':course.serialize()}), 200
+    listing = Listing.query.filter_by(id=listing_id).first()
+    if listing is not None:
+        return json.dumps({'success':True, 'data':listing.serialize()}), 200
     else:
-        return json.dumps({'success':False, 'error':'This course doesn\'t exist.'}), 404
+        return json.dumps({'success':False, 'error':'This book doesn\'t exist.'}), 404
+
+@app.route('/api/listings/user/<string:netid>/', methods=['GET'])
+def get_listings_by_seller(netid):
+    """
+    Returns a list of dictionary representations of all listings by the
+    given user. Method takes a net ID. 
+    """
+    user = User.query.filter_by(netid=netid).first()
+    if user is not None:
+        listings = user.serialize()['listings']
+        return json.dumps({'success':True, 'data':[Listing.query.filter_by(id=listing_id).first().serialize() for listing_id in listings]}), 200
+    else:
+        return json.dumps({'success':False, 'error':'This user doesn\'t exist.'}), 404
 
 @app.route('/api/users/', methods=['POST'])
 def create_user():
@@ -132,130 +102,56 @@ def create_user():
     Takes a name and a net ID. Profile picture not implemented.
     """
     post_body = json.loads(request.data)
-    user = User(name=post_body['name'], netid=post_body.get('netid'))
+    user = User(name=post_body['name'], netid=post_body.get('netid'), pfp=post_body.get('pfp', None))
     db.session.add(user)
     db.session.commit()
     res = {'success':True, 'data':user.serialize()}
     return json.dumps(res), 201
 
-@app.route('/api/books/', methods=['POST'])
-def add_book():
+@app.route('/api/listings/', methods=['POST'])
+def add_listing():
     """
     Takes a title, price, net ID (of seller), and course. Can also take a 
-    condition and notes. 
+    condition and notes and image.
     """
     with db.session.no_autoflush:
         post_body = json.loads(request.data)
         user = User.query.filter_by(netid=post_body['netid']).first()
         if user is None:
-            return json.dumps({'success':False, 'error':'This user class does not exist.'}), 404
-        course = Course.query.filter_by(title=post_body['course']).first()
-        if course is None:
-            # https://classes.cornell.edu/api/2.0/search/classes.json?roster=FA14&subject=MATH
-            course = Course(title = post_body['course'], college="Arts and Sciences")
+            return json.dumps({'success':False, 'error':'This user does not exist.'}), 404
+        book = Book.query.filter_by(title=post_body['title']).first()
+        if book is None:
+            book = Book(title=post_body['title'], course=post_body['course'], image=post_body.get('image', None))
         
-        book = Book(title=post_body['title'], price=post_body['price'], condition=post_body.get('condition', None), notes=post_body.get('notes', None))
+        listing = Listing(title=post_body['title'], price=post_body['price'], course=post_body['course'], condition=post_body.get('condition', ''), notes=post_body.get('notes', ''), image=post_body.get('image', None))
         
-        a1 = User_Book_Association()
+        a1 = User_Listing_Association()
         a1.user = user
-        a1.books = book
+        a1.listings = listing
 
-        a2 = Course_Book_Association()
-        a2.course = course 
-        a2.books = book
+        a2 = Book_Listing_Association()
+        a2.book = book 
+        a2.listings = listing
 
         db.session.add(a1)
         db.session.add(a2)
         db.session.commit()
-        res = {'success':True, 'data':book.serialize()}
+        res = {'success':True, 'data':listing.serialize()}
         return json.dumps(res), 201
 
-@app.route('/api/class/<int:book_id>/', methods=["DELETE"])
-def remove_book_by_id(book_id):
-    book = Book.query.filter_by(id=book_id).first()
-    if book is not None:
-        db.session.delete(book)
+@app.route('/api/listing/<int:listing_id>/', methods=["DELETE"])
+def remove_listing_by_id(listing_id):
+    listing = Listing.query.filter_by(id=listing_id).first()
+    if listing is not None:
+        a1 = User_Listing_Association.query.filter_by(listing_id=listing_id).first()
+        a2 = Book_Listing_Association.query.filter_by(listing_id=listing_id).first()
+        db.session.delete(a1)
+        db.session.delete(a2)
+        db.session.delete(listing)
         db.session.commit()
-        return json.dumps({'success':True, 'data':book.serialize()}), 200
-    return json.dumps({'success':False, 'error':'This book doesn\'t exist.'}), 404
+        return json.dumps({'success':True, 'data':listing.serialize()}), 200
+    return json.dumps({'success':False, 'error':'This listing doesn\'t exist.'}), 404
 
-
-# @app.route('/api/classes/', methods=['GET'])
-# def get_classes():
-#     classes = Class.query.all()
-#     res = {'success':True, 'data': [clas.serialize() for clas in classes]}
-#     return json.dumps(res), 200
-
-# @app.route('/api/classes/', methods=['POST'])
-# def create_class():
-#     post_body = json.loads(request.data)
-#     clas = Class(code=post_body['code'], name=post_body.get('name'))
-#     db.session.add(clas)
-#     db.session.commit()
-#     res = {'success':True, 'data':clas.serialize()}
-#     return json.dumps(res), 201
-    
-# @app.route('/api/class/<int:class_id>/', methods=['GET'])
-# def get_class(class_id):
-#     clas = Class.query.filter_by(id=class_id).first()
-#     if clas is not None:
-#         return json.dumps({'success':True, 'data':clas.serialize()}), 200
-#     else:
-#         return json.dumps({'success':False, 'error':'This class doesn\'t exist.'}), 404
-
-# @app.route('/api/class/<int:class_id>/', methods=["DELETE"])
-# def delete_class(class_id):
-#     clas = Class.query.filter_by(id=class_id).first()
-#     if clas is not None:
-#         db.session.delete(clas)
-#         db.session.commit()
-#         return json.dumps({'success':True, 'data':clas.serialize()}), 200
-#     return json.dumps({'success':False, 'error':'This class doesn\'t exist.'}), 404
-
-# @app.route('/api/users/', methods=['POST'])
-# def create_user():
-#     post_body = json.loads(request.data)
-#     user = User(name=post_body['name'], netid=post_body.get('netid'))
-#     db.session.add(user)
-#     db.session.commit()
-#     res = {'success':True, 'data':user.serialize()}
-#     return json.dumps(res), 201
-
-# @app.route('/api/user/<int:user_id>/', methods=['GET'])
-# def get_user(user_id):
-#     user = User.query.filter_by(id=user_id).first()
-#     if user is not None:
-#         return json.dumps({'success':True, 'data':user.serialize()}), 200
-#     else:
-#         return json.dumps({'success':False, 'error':'This user doesn\'t exist.'}), 404
-
-# @app.route('/api/class/<int:class_id>/add/', methods=['POST'])
-# def add_user_to_class(class_id):
-#     with db.session.no_autoflush:
-#         post_body = json.loads(request.data)
-#         clas = Class.query.filter_by(id=class_id).first()
-#         user = User.query.filter_by(id=post_body['user_id']).first()
-#         if clas is not None and user is not None:
-#             a = Association(extra_data = post_body['type'])
-#             a.clas = clas
-#             user.classes.append(a)
-#             db.session.add(a)
-#             db.session.commit()
-#             res = {'success':True, 'data':clas.serialize()}
-#             return json.dumps(res), 201
-#         return json.dumps({'success':False, 'error':'This user and/or class doesn\'t exist.'}), 404
-
-# @app.route('/api/class/<int:class_id>/assignment/', methods=['POST'])
-# def add_assignment_to_class(class_id):
-#     with db.session.no_autoflush:
-#         if Class.query.filter_by(id=class_id).first() is not None:
-#             post_body = json.loads(request.data)
-#             assignment = Assignment(description=post_body['description'], due_date=post_body['due_date'], id=class_id)
-#             db.session.add(assignment)
-#             db.session.commit()
-#             res = {'success':True, 'data':assignment.serialize()}
-#             return json.dumps(res), 201
-#         return json.dumps({'success':False, 'error':'This class doesn\'t exist.'}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
