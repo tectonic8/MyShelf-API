@@ -29,13 +29,13 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     netid = db.Column(db.String, nullable=False, unique=True)
     name = db.Column(db.String, nullable=False)
-    pfp = db.Column(db.String, nullable=True)
+    pfp = db.Column(db.String, nullable=False)
     listings = db.relationship("User_Listing_Association", back_populates="user")
     
     def __init__(self, **kwargs):
         self.name = kwargs.get('name', '')
         self.netid = kwargs.get('netid', '')
-        self.pfp = kwargs.get('pfp', None)
+        self.pfp = kwargs.get('pfp', '')
 
     def serialize(self):
         return {
@@ -54,7 +54,7 @@ class Listing(db.Model):
     course = db.Column(db.String, nullable=False)
     condition = db.Column(db.String, nullable=False)
     notes = db.Column(db.String(300), nullable=False)
-    image = db.Column(db.String, nullable =True)
+    image = db.Column(db.String, nullable =False)
     seller = db.relationship("User_Listing_Association", back_populates='listings')
     book =  db.relationship("Book_Listing_Association", back_populates="listings")
     
@@ -64,7 +64,7 @@ class Listing(db.Model):
         self.course = kwargs.get('course', '')
         self.condition = kwargs.get('condition', '')
         self.notes = kwargs.get('notes', '')
-        self.image = kwargs.get('image', None)
+        self.image = kwargs.get('image', '')
 
     def serialize(self):
         return {
@@ -84,7 +84,7 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     course = db.Column(db.String, nullable=False)
-    image = db.Column(db.String, nullable =True)
+    image = db.Column(db.String, nullable =False)
     listings = db.relationship("Book_Listing_Association", back_populates='book')
     
     def __init__(self, **kwargs):
