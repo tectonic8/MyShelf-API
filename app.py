@@ -96,6 +96,19 @@ def get_listings_by_seller(netid):
     else:
         return json.dumps({'success':False, 'error':'This user doesn\'t exist.'}), 404
 
+@app.route('/api/listings/book/<string:book_title>/', methods=['GET'])
+def get_listings_by_book(book_title):
+    """
+    Returns a list of dictionary representations of all listings for the book. 
+    Method takes a book title.
+    """
+    book = Book.query.filter_by(title=book_title).first()
+    if book is not None:
+        listings = book.serialize()['listings']
+        return json.dumps({'success':True, 'data':[Listing.query.filter_by(id=listing_id).first().serialize() for listing_id in listings]}), 200
+    else:
+        return json.dumps({'success':False, 'error':'This book doesn\'t exist.'}), 404
+
 @app.route('/api/users/', methods=['POST'])
 def create_user():
     """
