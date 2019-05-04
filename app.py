@@ -2,7 +2,7 @@ import json
 import os
 from urllib.parse import unquote
 from flask import Flask, request
-from db import db, User, Book, Listing, User_Listing_Association, Book_Listing_Association
+from db import db, User, Book, Listing
 
 app = Flask(__name__)
 db_filename = 'myshelf.db'
@@ -135,19 +135,14 @@ def add_listing():
         book = Book.query.filter_by(title=post_body['title']).first()
         if book is None:
             book = Book(title=post_body['title'], course=post_body['course'], image=post_body.get('image', ''))
-        
-        listing = Listing(title=post_body['title'], price=post_body['price'], course=post_body['course'], condition=post_body.get('condition', ''), notes=post_body.get('notes', ''), image=post_body.get('image', ''))
-        
-        a1 = User_Listing_Association()
-        a1.user = user
-        a1.listings = listing
+                   
+        listing = Listing(title=post_body['title'], price=post_body['price'], 
+                            course=post_body['course'], condition=post_body.get('condition', ''), 
+                            notes=post_body.get('notes', ''), image=post_body.get('image', ''), 
+                            user=user, book=book)
 
-        a2 = Book_Listing_Association()
-        a2.book = book 
-        a2.listings = listing
 
-        db.session.add(a1)
-        db.session.add(a2)
+        db.session.add(listing)
         db.session.commit()
         res = {'success':True, 'data':listing.serialize()}
         return json.dumps(res), 201
@@ -174,37 +169,30 @@ def add_book():
 def remove_listing_by_id(listing_id):
     listing = Listing.query.filter_by(id=listing_id).first()
     if listing is not None:
-        a1 = User_Listing_Association.query.filter_by(listing_id=listing_id).first()
-        a2 = Book_Listing_Association.query.filter_by(listing_id=listing_id).first()
-        db.session.delete(a1)
-        db.session.delete(a2)
+        res = listing.serialize()
         db.session.delete(listing)
         db.session.commit()
-        return json.dumps({'success':True, 'data':listing.serialize()}), 200
+        return json.dumps({'success':True, 'data':res}), 200
     return json.dumps({'success':False, 'error':'This listing doesn\'t exist.'}), 404
 
 @app.route('/api/user/<int:user_id>/', methods=["DELETE"])
 def remove_user_by_id(user_id):
     user = User.query.filter_by(id=user_id).first()
     if user is not None:
-        a1 = User_Listing_Association.query.filter_by(user_id=user_id).first()
-        print(a1.listings)
-        # db.session.delete(a1)
-        # db.session.delete(user)
-        # db.session.commit()
-        return json.dumps({'success':True, 'data':user.serialize()}), 200
+        res = user.serialize()
+        db.session.delete(user)
+        db.session.commit()
+        return json.dumps({'success':True, 'data':res}), 200
     return json.dumps({'success':False, 'error':'This user doesn\'t exist.'}), 404
 
 @app.route('/api/book/<int:book_id>/', methods=["DELETE"])
 def remove_book_by_id(book_id):
     book = Book.query.filter_by(id=book_id).first()
     if book is not None:
-        a2 = Book_Listing_Association.query.filter_by(book_id=book_id).first()
-        if a2 is not None:
-            db.session.delete(a2)
+        res = book.serialize()
         db.session.delete(book)
         db.session.commit()
-        return json.dumps({'success':True, 'data':book.serialize()}), 200
+        return json.dumps({'success':True, 'data':res}), 200
     return json.dumps({'success':False, 'error':'This book doesn\'t exist.'}), 404
 
 
