@@ -66,7 +66,10 @@ def get_user_by_netid(netid):
     """
     Returns a dictionary representations of the user with the given net ID. 
     """
-    user = User.query.filter_by(netid=netid).first()
+    if netid.isdigit():
+        user = User.query.filter_by(id=int(netid)).first()
+    else:
+        user = User.query.filter_by(netid=netid).first()
     if user is not None:
         return json.dumps({'success':True, 'data':[user.serialize()]}), 200
     else:
