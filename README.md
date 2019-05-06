@@ -1,2 +1,2 @@
 # MyShelf-API
-Backend for MyShelf app
+Backend API for MyShelf app

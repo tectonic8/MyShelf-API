@@ -17,54 +17,17 @@
                   "id" : 1,
                   "title" : "Introduction to Calculus",
                   "course" : "MATH 1110",
-                  "image" : None,
+                  "image" : "",
                   "listings" : [0, 3, 43, 192]
                 },
                 {
                   "id" : 2,
                   "title" : "Algorithm Design",
                   "course" : "CS 4820",
-                  "image" : None,
+                  "image" : "",
                   "listings" : [29, 323, 4, 13]
                 }
               ]
-    }
-
-*Example iOS Response model:* 
-(Note for Backend: you don’t need to make these for iOS, the following is a guide for iOS)
-******
-    struct Class {
-      var id: Int,
-      var code: String,
-      var name: String,
-      var assignments: [Assignment],
-      var students: [Student],
-      var instructors: [Instructor]
-      // or, if students and instructors are both Users, make them [User], up to you
-    }
-    
-    struct ClassesResponse {
-      var success: Bool
-      var data: [Class]
-    }
-
-*Example iOS Alamofire request:*
-
-    static func getClasses(completion: @escaping ([Class]) -> Void) {
-      let endpoint = "\(endpointVariable)/api/classes/"
-      Alamofire.request(endpoint, method: .get).validate().responseData { response in
-        switch response.result {
-        case .success(let data):
-            let jsonDecoder = JSONDecoder()
-            if let classesResponse = try? jsonDecoder.decode(ClassesResponse.self, from: data) {
-                completion(classesResponse.data)
-            } else {
-                print("Invalid Response Data")
-            }
-        case .failure(let error):
-            print(error.localizedDescription)
-        }
-      }
     }
 
 
@@ -88,18 +51,19 @@
 *Request:* `GET /api/books/book/{string: book title}/`
 
 - Here the title would be "Introductory%20Calculus”
+- Always a one element list.
 
 *Response:*
 
     {
       "success": True,
-      "data": {
+      "data": [{
           "id" : 1,
           "title" : "Introductory Calculus",
           "course" : "MATH 1110",
-          "image" : None,
+          "image" : "",
           "listings" : [12, 224, 23]
-        }
+        }]
     } 
 
 
@@ -108,25 +72,27 @@
 *Request:* `GET /api/books/book/id/{int: book id}/`
 
 - Here the id would be 0.
+- Always a one element list
 
 *Response:*
 
     {
       "success": True,
-      "data": {
+      "data": [{
           "id" : 1,
           "title" : "Introductory Calculus",
           "course" : "MATH 1110",
-          "image" : None,
+          "image" : "",
           "listings" : [12, 224, 23]
-        }
+        }]
     } 
 
 
-## Get user by net ID
+## Get user by ID
 
 *Request:* `GET /api/user/{string: net ID}/`
 
+- This method gets the user by their numeric ID in the database or their net ID, depending on whether whether the string passed to the method contains letters in it.
 - Profile picture not currently implemented
 - Note that the listings for a user are stored by their ID, not their full dict representation
 
@@ -134,13 +100,13 @@
 
     {
       "success": True,
-      "data": {
+      "data": [{
                 "id" : 1,
                 "name" : Hartek Sabharwal,
                 "netid" : hs786,
-                "pfp" : None,
+                "pfp" : "",
                 "listings" : [0, 10, 283, 392]
-              }
+              }]
     } 
 
 
@@ -154,18 +120,17 @@
 
     {
       "success": True,
-      "data": 
-              {
+      "data": [{
                 "id" : 3,
                 "title" : "Introduction to Statistics",
                 "price" : "27.83", 
                 "condition": "good", 
                 "notes" : "My dog ate the front cover.",
-                "image" : None,
+                "image" : "",
                 "course" : "STSCI 2100",
                 "seller" : 10, 
                 "book" : 273
-              }
+              }]
     } 
 
 
@@ -186,7 +151,7 @@
                   "price" : "27.83", 
                   "condition": "good", 
                   "notes" : "My dog ate the front cover.",
-                  "image" : None,
+                  "image" : "",
                   "course" : "STSCI 2100",
                   "seller" : 10, 
                   "book" : 273
@@ -197,7 +162,7 @@
                   "price" : "3.23", 
                   "condition": "okay", 
                   "notes" : "My friend drew a thing on a lot of the pages.",
-                  "image" : None,
+                  "image" : "",
                   "course" : "CS 4820",
                   "seller" : 10, 
                   "book" : 932 
@@ -206,6 +171,41 @@
     } 
 
 
+## Get listings by book title
+
+*Request:* `GET /api/listings/book/{string: book title}/`
+
+- Error if the title does not exist in the database. Empty list if there are no active listings for the book, but the book is in the database.
+
+*Response:*
+
+    {
+      "success": True,
+      "data": [
+                {
+                  "id" : 1,
+                  "title" : "Algorithm Design",
+                  "price" : "2.30", 
+                  "condition": "pretty bad ngl", 
+                  "notes" : "I had a nosebleed on page 80.",
+                  "image" : "",
+                  "course" : "CS 4820",
+                  "seller" : 111, 
+                  "book" : 932
+                }, 
+                {
+                  "id" : 29,
+                  "title" : "Algorithm Design",
+                  "price" : "3.23", 
+                  "condition": "okay", 
+                  "notes" : "My friend drew a thing on a lot of the pages.",
+                  "image" : "",
+                  "course" : "CS 4820",
+                  "seller" : 10, 
+                  "book" : 932 
+                  }
+              ]
+    } 
 ## Create a user
 
 *Request:* `POST /api/users/`
@@ -233,37 +233,33 @@
               }
     }
 
-*Example iOS Response model:*
 
-    struct PostResponse {
-      var success: Bool
-      // Note: you don"t need data here because you"re POST-ing, not getting data back. 
-      // You can choose whether or not you want to have the data variable here.
-      // You need the "success" variable here because you want to know if you successfully
-      // sent the information to the backend.
+## Add a book
+
+*Request:* `POST /api/book/`
+
+- The `pfp` argument in the body is optional
+- Returns error if a book with this title already exists.
+
+*Body:*
+
+    {
+      "title": "Slaughterhouse Five",
+      "course": "ENGL 2060",
+      "image" : "/images/books/slaughterhousefive.png"
     }
 
-*Example iOS Alamofire request:*
+*Response:*
 
-    static func createClass(code: String, name: String, completion: @escaping (Bool) -> Void) {
-      let postEndpoint = "\(endpointVariable)/api/classes/"
-      let parameters: [String: Any] = [
-                      "code": code,
-                      "name": name
-      ]
-      Alamofire.request(postEndpoint, method: .post, parameters: parameters, encoding: URLEncoding.default, headers: [:]).validate().responseData { response in
-          switch response.result {
-          case .success(let data):
-              let jsonDecoder = JSONDecoder()
-              if let postResponse = try? jsonDecoder.decode(PostResponse.self, from: data) {
-                  completion(postResponse.success)
-              } else {
-                  print("Invalid Response Data")
-              }
-          case .failure(let error):
-              print(error.localizedDescription)
-        }
-      }
+    {
+      "success": True,
+      "data": {
+          "id": 4, 
+          "title": "Slaughterhouse Five", 
+          "course": "ENGL 2060", 
+          "image": "/images/books/slaughterhousefive.png", 
+          "listings": []
+          }
     }
 
 
@@ -274,6 +270,7 @@
 - The condition, image, and notes fields are optional.
 - Might add author and edition field at some point?
 - Error if the user does not exist.
+- Automatically adds the book to the book database if not already present.
 
 *Body:*
 
@@ -310,6 +307,7 @@
 *Request:* `DELETE /api/listing/{int: listing ID}/`
 
 - Error if the listing doesn’t exist to begin with. 
+- The book and the user stay in the database.
 
 *Response:*
 
@@ -327,4 +325,46 @@
           "book" : 2
         }
     } 
+
+
+## Delete user by ID
+
+*Request:* `DELETE /api/user/{int: listing ID}/`
+
+- Error if the user doesn’t exist to begin with. 
+- The listings the user made are deleted as well.
+
+*Response:*
+
+    {
+      "success": true, 
+      "data": {
+          "id": 1, 
+          "name": "Hartek Sabharwal", 
+          "netid": "hs786", 
+          "pfp": "/images/users/hs786.png", 
+          "listings": [1]
+        }
+    }
+
+
+## Delete book by ID
+
+*Request:* `DELETE /api/book/{int: listing ID}/`
+
+- Error if the book doesn’t exist to begin with. 
+- The listings of the book are deleted as well.
+
+*Response:*
+
+    {
+      "success": true, 
+      "data": {
+          "id": 5, 
+          "title": "Pride and Prejudice", 
+          "course": "CS 4820", 
+          "image": "", 
+          "listings": []
+        }
+    }
 
